@@ -63,7 +63,7 @@ train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_s
 val_dataset = BrainSphere(fold1)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-conv_type = "DiNe"   # "RePa" or "DiNe"
+conv_type = "RePa"   # "RePa" or "DiNe"
 pooling_type = "mean"  # "max" or "mean" 
 model = UNet_small(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
 
@@ -74,15 +74,6 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', factor=0.2, patience=1, verbose=True, threshold=0.0001, threshold_mode='rel')
 
-
-def get_learning_rate(epoch):
-    limits = [2, 4, 7, 10]
-    lrs = [1, 0.2, 0.1, 0.01, 0.001]
-    assert len(lrs) == len(limits) + 1
-    for lim, lr in zip(limits, lrs):
-        if epoch < lim:
-            return lr * learning_rate
-    return lrs[-1] * learning_rate
 
 def train_step(data, target):
     model.train()
@@ -152,9 +143,7 @@ a=0
 train_dice = [0, 0, 0, 0, 0]
 for epoch in range(100):
 
-    #lr = get_learning_rate(epoch)
     for p in optimizer.param_groups:
-       # p['lr'] = lr
         print("learning rate = {}".format(p['lr']))
     
 #    dataiter = iter(train_dataloader)
@@ -174,7 +163,7 @@ for epoch in range(100):
     print("Val Dice: ",val_dice)   
     a = val_train_during_training()
     writer.add_scalars('data/Dice', {'train': a, 'val': val_dice}, epoch)
-    
+
     scheduler.step(a)
 
     train_dice[epoch % 5] = a
@@ -184,6 +173,7 @@ for epoch in range(100):
         break
 
     if epoch % 5 == 0:
-        #a = val_train_during_training()
+       # a = val_train_during_training()
+        #print("train Dice:", a)
         torch.save(model.state_dict(), os.path.join("state.pkl"))
   
