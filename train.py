@@ -4,9 +4,6 @@
 Created on Tue Aug 28 14:21:19 2018
 
 @author: zfq
-
-This is for brain parcellation. Implemente the gCNN method in paper "Geometric
- Convolutional Neural Network for Analyzing Surface-Based Neuroimaging Data"
 """
 
 import torch
@@ -21,18 +18,23 @@ import glob
 import os
 
 from sklearn.metrics import f1_score
-from gCNN import gCNN_with_pool
 from tensorboardX import SummaryWriter
+writer = SummaryWriter('log/a')
+from utils import compute_weight
 
-writer = SummaryWriter('log/with_pool')
+#from gCNN import * 
+from models import *
+from UNet_interpolation import *
+from SegNet import *
 
 class BrainSphere(torch.utils.data.Dataset):
 
-    def __init__(self, root, transform=None):
-        self.root = root
-        self.files = sorted(glob.glob(os.path.join(self.root, '*.mat')))    
-        self.transform = transform
-        
+    def __init__(self, root1, root2 = None):
+
+        self.files = sorted(glob.glob(os.path.join(root1, '*.mat')))    
+        if root2 is not None:
+            self.files = self.files + sorted(glob.glob(os.path.join(root2, '*.mat')))
+
     def __getitem__(self, index):
         file = self.files[index]
         feats = sio.loadmat(file)
@@ -51,32 +53,36 @@ class BrainSphere(torch.utils.data.Dataset):
 
 learning_rate = 0.1
 momentum = 0.99
-wd = 0.0001
+weight_decay = 0.0001
 batch_size = 1
-train_dataset_path = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/train'
-val_dataset_path = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/val'
-train_dataset = BrainSphere(train_dataset_path)
+fold1 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold1'
+fold2 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold2'
+fold3 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold3'
+train_dataset = BrainSphere(fold2, fold3)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-val_dataset = BrainSphere(val_dataset_path)
+val_dataset = BrainSphere(fold1)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
+conv_type = "DiNe"   # "RePa" or "DiNe"
+pooling_type = "mean"  # "max" or "mean" 
+model = UNet_small(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
 
-model = gCNN_with_pool(36)
+
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
 model.cuda()
-optimizer = torch.optim.SGD(model.parameters(), lr=0, momentum=momentum, weight_decay=wd)
 criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', factor=0.2, patience=1, verbose=True, threshold=0.0001, threshold_mode='rel')
 
 
 def get_learning_rate(epoch):
-    limits = [3, 5, 8, 15, 20]
-    lrs = [1, 0.5, 0.2, 0.1, 0.01, 0.001]
+    limits = [2, 4, 7, 10]
+    lrs = [1, 0.2, 0.1, 0.01, 0.001]
     assert len(lrs) == len(limits) + 1
     for lim, lr in zip(limits, lrs):
         if epoch < lim:
             return lr * learning_rate
     return lrs[-1] * learning_rate
-
 
 def train_step(data, target):
     model.train()
@@ -90,13 +96,12 @@ def train_step(data, target):
     loss.backward()
     optimizer.step()
 
-    dice = np.mean(compute_dice(prediction, target))
-    return loss.item(), dice
+    return loss.item()
 
 
 def compute_dice(pred, gt):
 
-    pred = pred.detach().cpu().numpy()
+    pred = pred.cpu().numpy()
     gt = gt.cpu().numpy()
     
     dice = np.zeros(36)
@@ -143,26 +148,14 @@ def val_train_during_training():
 
     return train_dice
 
+a=0
+train_dice = [0, 0, 0, 0, 0]
+for epoch in range(100):
 
-
-for epoch in range(300):
-
-    val_dice = val_during_training()
-    print("Val Dice: ",val_dice)
-    if epoch % 5 == 0:
-        train_dice = val_train_during_training()
-        print("train Dice: ",train_dice)
-
-    writer.add_scalars('data/Dice', {'train': train_dice, 'val': val_dice}, epoch)
-
-    lr = get_learning_rate(epoch)
-    print("learning rate = {} and batch size = {}".format(lr, train_dataloader.batch_size))
+    #lr = get_learning_rate(epoch)
     for p in optimizer.param_groups:
-        #print(p)
-        p['lr'] = lr
-
-    total_loss = 0
-    total_correct = 0
+       # p['lr'] = lr
+        print("learning rate = {}".format(p['lr']))
     
 #    dataiter = iter(train_dataloader)
 #    data, target = dataiter.next()
@@ -170,13 +163,27 @@ for epoch in range(300):
     for batch_idx, (data, target) in enumerate(train_dataloader):
         data = data.squeeze()
         target = target.squeeze()
-        loss, dice = train_step(data, target)
+        loss = train_step(data, target)
 
-        print("[{}:{}/{}]  LOSS={:.4}  DICE={:.4}".format(epoch, 
-              batch_idx, len(train_dataloader), loss, dice))
+        print("[{}:{}/{}]  LOSS={:.4}".format(epoch, 
+              batch_idx, len(train_dataloader), loss))
         
-        writer.add_scalar('Train/Loss', loss, epoch*70 + batch_idx)
-        
-    #if epoch % 5 == 0 :
-     #   torch.save(model.state_dict(), os.path.join("state.pkl"))
+        writer.add_scalar('Train/Loss', loss, epoch*len(train_dataloader) + batch_idx)
 
+    val_dice = val_during_training()
+    print("Val Dice: ",val_dice)   
+    a = val_train_during_training()
+    writer.add_scalars('data/Dice', {'train': a, 'val': val_dice}, epoch)
+    
+    scheduler.step(a)
+
+    train_dice[epoch % 5] = a
+    print("last five train Dice: ",train_dice)
+    if np.std(np.array(train_dice)) <= 0.00001:
+        torch.save(model.state_dict(), os.path.join("state.pkl"))
+        break
+
+    if epoch % 5 == 0:
+        #a = val_train_during_training()
+        torch.save(model.state_dict(), os.path.join("state.pkl"))
+  

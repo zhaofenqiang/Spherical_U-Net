@@ -16,18 +16,24 @@ import scipy.io as sio
 import numpy as np
 import glob
 import os
+import time
 
 from sklearn.metrics import f1_score
-from bscnn.brainSphereCNN import BrainSphereCNN
+
+#from gCNN import * 
+from models import *
+from UNet_interpolation import *
+from SegNet import *
 
 
 class BrainSphere(torch.utils.data.Dataset):
 
-    def __init__(self, root, transform=None):
-        self.root = root
-        self.files = sorted(glob.glob(os.path.join(self.root, '*.mat')))    
-        self.transform = transform
-        
+    def __init__(self, root1, root2 = None):
+
+        self.files = sorted(glob.glob(os.path.join(root1, '*.mat')))    
+        if root2 is not None:
+            self.files = self.files + sorted(glob.glob(os.path.join(root2, '*.mat')))
+
     def __getitem__(self, index):
         file = self.files[index]
         feats = sio.loadmat(file)
@@ -46,9 +52,9 @@ class BrainSphere(torch.utils.data.Dataset):
     
 def compute_dice(pred, gt):
 
-    pred = pred.numpy()
-    gt = gt.numpy()
-    
+    pred = pred.cpu().numpy()
+    gt = gt.cpu().numpy()
+
     dice = np.zeros(36)
     for i in range(36):
         gt_indices = np.where(gt == i)[0]
@@ -57,37 +63,46 @@ def compute_dice(pred, gt):
     return dice
     
 
-learning_rate = 0.1
-momentum = 0.9
-wd = 0.0001
 batch_size = 1
-test_dataset_path = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/test'
-test_dataset = BrainSphere(test_dataset_path)
-test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+fold1 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold1'
+fold2 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold2'
+fold3 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold3'
+
+test_dataset = BrainSphere(fold2)
+test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
 #    dataiter = iter(test_dataloader)
 #    data, target = dataiter.next()
 
-model = BrainSphereCNN(36)
+conv_type = "DiNe"   # "RePa" or "DiNe"
+pooling_type = "mean"  # "max" or "mean" 
+model = UNet_interpolation(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
+
+
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
 model.cuda()
-model.load_state_dict(torch.load('/home/zfq/graphsage-simple/state.pkl'))
+model.load_state_dict(torch.load('/home/zfq/gCNN/state.pkl'))
 model.eval()
 
 dice_all = np.zeros((len(test_dataloader),36))
+times = []
 for batch_idx, (data, target) in enumerate(test_dataloader):
     data = data.squeeze()
     target = target.squeeze()
     data, target = data.cuda(), target.cuda()
+    
+    time_start=time.time()    
     with torch.no_grad():
         prediction = model(data)
+    time_end=time.time()
+    times.append(time_end - time_start)
     
-    dice_all[batch_idx,:] = compute_dice(prediction, target)
+    pred = prediction.max(1)[1]
+    dice_all[batch_idx,:] = compute_dice(pred, target)
+    #pred = pred.cpu().numpy()
+    #np.savetxt(str(batch_idx+1) + '.txt', pred) 
 
 print(np.mean(dice_all, axis=0))
 print("average dice:", np.mean(dice_all))
+print("average time for one inference:",np.mean(np.array(times)))
 
-
-    
-    
-    
