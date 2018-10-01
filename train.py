@@ -58,14 +58,14 @@ batch_size = 1
 fold1 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold1'
 fold2 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold2'
 fold3 = '/media/zfq/WinE/unc/zhengwang/dataset/format_dataset/90/fold3'
-train_dataset = BrainSphere(fold2, fold3)
+train_dataset = BrainSphere(fold1, fold2)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-val_dataset = BrainSphere(fold1)
+val_dataset = BrainSphere(fold3)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-conv_type = "RePa"   # "RePa" or "DiNe"
+conv_type = "DiNe"   # "RePa" or "DiNe"
 pooling_type = "mean"  # "max" or "mean" 
-model = UNet_small(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
+model = UNet_interpolation(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
 
 
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
@@ -175,5 +175,5 @@ for epoch in range(100):
     if epoch % 5 == 0:
        # a = val_train_during_training()
         #print("train Dice:", a)
-        torch.save(model.state_dict(), os.path.join("state.pkl"))
+        torch.save(model.state_dict(), os.path.join("interpolation.pkl"))
   

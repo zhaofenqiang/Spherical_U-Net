@@ -76,12 +76,12 @@ test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_siz
 
 conv_type = "DiNe"   # "RePa" or "DiNe"
 pooling_type = "mean"  # "max" or "mean" 
-model = UNet_interpolation(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
+model = UNet(36, conv_type, pooling_type) # UNet or UNet_small or naive_gCNN or UNet_interpolation or SegNet
 
 
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
 model.cuda()
-model.load_state_dict(torch.load('/home/zfq/gCNN/state.pkl'))
+model.load_state_dict(torch.load('/home/zfq/gCNN/trained_models/UNet_DiNe.pkl'))
 model.eval()
 
 dice_all = np.zeros((len(test_dataloader),36))
@@ -99,10 +99,10 @@ for batch_idx, (data, target) in enumerate(test_dataloader):
     
     pred = prediction.max(1)[1]
     dice_all[batch_idx,:] = compute_dice(pred, target)
-    #pred = pred.cpu().numpy()
-    #np.savetxt(str(batch_idx+1) + '.txt', pred) 
+    pred = prediction.cpu().numpy()
+    np.savetxt('/media/zfq/WinE/unc/zhengwang/results/softmax/UNet/UNet_' + str(batch_idx+31) + '.txt', pred) 
 
-print(np.mean(dice_all, axis=0))
+print(np.mean(dice_all, axis=1))
 print("average dice:", np.mean(dice_all))
 print("average time for one inference:",np.mean(np.array(times)))
 
