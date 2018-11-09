@@ -1,1 +1,1 @@
-# Implement mesh-based geometric CNN for infant cortical surface parcellation
+# Spherical U-Net for infant cortical surface parcellation
