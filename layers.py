@@ -5,8 +5,7 @@ Created on Mon Jun 25 14:18:30 2018
 
 @author: zfq
 
-This is for brain parcellation. Implement the geometric U-Net 
-and modify it for brain segmentation
+This is for brain parcellation. Implement the Spherical U-Net 
 """
 
 import torch
