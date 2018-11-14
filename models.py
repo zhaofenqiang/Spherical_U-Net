@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 25 14:18:30 2018
@@ -12,7 +12,6 @@ and modify it for brain segmentation
 import torch
 import numpy as np
 import torch.nn as nn
-from torch.autograd import Variable
 from torch.nn import init
 from utils import *
 from layers import *

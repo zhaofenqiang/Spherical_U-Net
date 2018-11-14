@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 25 14:18:30 2018
@@ -67,22 +67,22 @@ class DiNe_conv_layer(nn.Module):
 
 class pool_layer(nn.Module):
 
-    def __init__(self, num_nodes, neigh_orders, pooling_type):
+    def __init__(self, neigh_orders, pooling_type):
         super(pool_layer, self).__init__()
 
-        self.num_nodes = num_nodes
         self.neigh_orders = neigh_orders
         self.pooling_type = pooling_type
         
     def forward(self, x):
        
+        num_nodes = int((x.size()[0]+6)/4)
         feat_num = x.size()[1]
-        x = x[self.neigh_orders[0:self.num_nodes*7]].view(self.num_nodes, feat_num, 7)
+        x = x[self.neigh_orders[0:num_nodes*7]].view(num_nodes, feat_num, 7)
         if self.pooling_type == "mean":
             x = torch.mean(x, 2)
         if self.pooling_type == "max":
             x = torch.max(x, 2)[0]
-        assert(x.size() == torch.Size([self.num_nodes, feat_num]))
+        assert(x.size() == torch.Size([num_nodes, feat_num]))
                 
         return x
     
@@ -107,10 +107,9 @@ class SegNet_pool_layer(nn.Module):
         
 class upconv_layer(nn.Module):
 
-    def __init__(self, num_nodes, in_feats, out_feats, upconv_top_index, upconv_down_index):
+    def __init__(self, in_feats, out_feats, upconv_top_index, upconv_down_index):
         super(upconv_layer, self).__init__()
 
-        self.num_nodes = num_nodes
         self.in_feats = in_feats
         self.out_feats = out_feats
         self.upconv_top_index = upconv_top_index
@@ -120,13 +119,14 @@ class upconv_layer(nn.Module):
     def forward(self, x):
        
         raw_nodes = x.size()[0]
+        new_nodes = int(raw_nodes*4 - 6)
         x = self.weight(x)
         x = x.view(len(x) * 7, self.out_feats)
         x1 = x[self.upconv_top_index]
         assert(x1.size() == torch.Size([raw_nodes, self.out_feats]))
         x2 = x[self.upconv_down_index].view(-1, self.out_feats, 2)
         x = torch.cat((x1,torch.mean(x2, 2)), 0)
-        assert(x.size() == torch.Size([self.num_nodes, self.out_feats]))
+        assert(x.size() == torch.Size([new_nodes, self.out_feats]))
         return x
 
 
