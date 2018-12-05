@@ -21,9 +21,9 @@ class naive_gCNN(nn.Module):
     def __init__(self, num_classes, conv_type, pooling_type):
         super(naive_gCNN, self).__init__()
         
-        neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
+        neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
        
-        self.feature_dims = [4, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+        self.feature_dims = [1, 64, 64, 64, 64]
                 
         if conv_type == "RePa":
             conv_layer = gCNN_conv_layer
@@ -36,13 +36,13 @@ class naive_gCNN(nn.Module):
             nfeature_in = self.feature_dims[l]
             nfeature_out = self.feature_dims[l + 1]
 
-            sequence.append(conv_layer(nfeature_in, nfeature_out, neigh_orders_10242, None, None))
+            sequence.append(conv_layer(nfeature_in, nfeature_out, neigh_orders_40962, None, None))
             sequence.append(nn.BatchNorm1d(nfeature_out))
             sequence.append(nn.ReLU())
 
         self.sequential = nn.Sequential(*sequence)
       
-        self.out_layer = conv_layer(self.feature_dims[-1], num_classes, neigh_orders_10242, None, None)
+        self.out_layer = conv_layer(self.feature_dims[-1], num_classes, neigh_orders_40962, None, None)
         
 
     def forward(self, x):

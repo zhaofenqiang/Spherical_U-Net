@@ -69,9 +69,9 @@ class up_block(nn.Module):
         return x
     
 
-class Generator(nn.Module):
-    def __init__(self, num_classes, conv_type, pooling_type):
-        super(Generator, self).__init__()
+class Unet(nn.Module):
+    def __init__(self, in_ch, out_ch):
+        super(Unet, self).__init__()
 
         #neigh_indices_10242, neigh_indices_2562, neigh_indices_642, neigh_indices_162, neigh_indices_42 = Get_indices_order()
         #neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
@@ -79,7 +79,7 @@ class Generator(nn.Module):
         neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
         upconv_top_index_40962, upconv_down_index_40962, upconv_top_index_10242, upconv_down_index_10242,  upconv_top_index_2562, upconv_down_index_2562,  upconv_top_index_642, upconv_down_index_642, upconv_top_index_162, upconv_down_index_162 = Get_upconv_index() 
 
-        chs = [2, 32, 64, 128, 256, 512]
+        chs = [in_ch, 64, 128, 256, 512, 1024]
 
         #if conv_type == "RePa":
          #   conv_layer = gCNN_conv_layer
@@ -90,28 +90,38 @@ class Generator(nn.Module):
         self.down2 = down_block(conv_layer, chs[1], chs[2], neigh_orders_10242, neigh_orders_40962)
         self.down3 = down_block(conv_layer, chs[2], chs[3], neigh_orders_2562, neigh_orders_10242)
         self.down4 = down_block(conv_layer, chs[3], chs[4], neigh_orders_642, neigh_orders_2562)
-        self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders_162, neigh_orders_642)
+#       self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders_162, neigh_orders_642)
       
-        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders_642, upconv_top_index_642, upconv_down_index_642)
+#        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders_642, upconv_top_index_642, upconv_down_index_642)
         self.up2 = up_block(conv_layer, chs[4], chs[3], neigh_orders_2562, upconv_top_index_2562, upconv_down_index_2562)
         self.up3 = up_block(conv_layer, chs[3], chs[2], neigh_orders_10242, upconv_top_index_10242, upconv_down_index_10242)
         self.up4 = up_block(conv_layer, chs[2], chs[1], neigh_orders_40962, upconv_top_index_40962, upconv_down_index_40962)
-        self.outc = conv_layer(chs[1], num_classes, neigh_orders_40962)
-        self.tanh = nn.Tanh()
+        self.outc = nn.Sequential(
+                conv_layer(chs[1], chs[1], neigh_orders_40962),
+                nn.BatchNorm1d(chs[1]),
+                nn.LeakyReLU(0.2),
+                conv_layer(chs[1], chs[1], neigh_orders_40962),
+                nn.BatchNorm1d(chs[1]),
+                nn.LeakyReLU(0.2),
+                conv_layer(chs[1], out_ch, neigh_orders_40962)
+                )
+                
+        
+#        self.tanh = nn.Tanh()
 
     def forward(self, x):
         x2 = self.down1(x)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-        x6 = self.down5(x5)
+#        x6 = self.down5(x5)
         
-        x = self.up1(x6, x5)
-        x = self.up2(x, x4)
+#        x = self.up1(x6, x5)
+        x = self.up2(x5, x4)
         x = self.up3(x, x3)
         x = self.up4(x, x2)
         x = self.outc(x)
-        x = self.tanh(x)
+#        x = self.tanh(x)
         return x
 
 
@@ -193,7 +203,7 @@ class dense_block(nn.Module):
         return x4
 
 class dense_unet(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, in_ch, out_ch):
         super(dense_unet, self).__init__()
             
         #neigh_indices_10242, neigh_indices_2562, neigh_indices_642, neigh_indices_162, neigh_indices_42 = Get_indices_order()
@@ -207,29 +217,27 @@ class dense_unet(nn.Module):
         #if conv_type == "DiNe":
         #conv_layer = DiNe_conv_layer
 
-        self.down1 = down_block(DiNe_conv_layer, 1, 48, neigh_orders_40962, None, True)
+        self.down1 = down_block(DiNe_conv_layer, in_ch, 64, neigh_orders_40962, None, True)
         self.pool1 = pool_layer(neigh_orders_40962, 'mean')
-        self.dense1 = dense_block(48, neigh_orders_10242)
+        self.dense1 = dense_block(64, neigh_orders_10242)
         self.pool2 = pool_layer(neigh_orders_10242, 'mean')
-        self.dense2 = dense_block(48, neigh_orders_2562)
+        self.dense2 = dense_block(64, neigh_orders_2562)
         self.pool3 = pool_layer(neigh_orders_2562, 'mean')
-        self.dense3 = dense_block(48, neigh_orders_642)
+        self.dense3 = dense_block(64, neigh_orders_642)
         
-        self.up1 = upconv_layer(48, 48, upconv_top_index_2562, upconv_down_index_2562)
-        self.dense4 = dense_block(48, neigh_orders_2562)
-        self.up2 = upconv_layer(48, 48, upconv_top_index_10242, upconv_down_index_10242)
-        self.dense5 = dense_block(48, neigh_orders_10242)
-        self.up3 = upconv_layer(48, 48, upconv_top_index_40962, upconv_down_index_40962)
+        self.up1 = upconv_layer(64, 64, upconv_top_index_2562, upconv_down_index_2562)
+        self.dense4 = dense_block(64, neigh_orders_2562)
+        self.up2 = upconv_layer(64, 64, upconv_top_index_10242, upconv_down_index_10242)
+        self.dense5 = dense_block(64, neigh_orders_10242)
+        self.up3 = upconv_layer(64, 64, upconv_top_index_40962, upconv_down_index_40962)
             
-        self.outc1 = nn.Sequential(
-                DiNe_conv_layer(48, 48, neigh_orders_40962),
-                nn.BatchNorm1d(48),
-                nn.LeakyReLU(0.2, inplace=True)
+        self.outc = nn.Sequential(
+                DiNe_conv_layer(64, 64, neigh_orders_40962),
+                nn.BatchNorm1d(64),
+                nn.LeakyReLU(0.2, inplace=True),
+                DiNe_conv_layer(64, out_ch, neigh_orders_40962)
                 )
-        self.outc2 = DiNe_conv_layer(48, 1, neigh_orders_40962)
                 
-        self.tanh = nn.Tanh()
-
     def forward(self, x):
         x1 = self.down1(x)
         x2 = self.dense1(self.pool1(x1))
@@ -242,8 +250,7 @@ class dense_unet(nn.Module):
         x = self.dense5(x)
         x = nn.functional.leaky_relu(x1 + self.up3(x), negative_slope=0.2)
         
-        x = self.outc2(self.outc1(x))
-        x = self.tanh(x)
+        x = self.outc(x)
         return x
     
     
@@ -387,20 +394,21 @@ class res_block(nn.Module):
         super(res_block, self).__init__()
         
         self.conv1 = DiNe_conv_layer(c_in, c_out, neigh_orders)
-        self.bn = nn.BatchNorm1d(c_out)
-        self.relu = nn.ReLU()
+        self.bn1 = nn.BatchNorm1d(c_out)
+        self.relu = nn.LeakyReLU(0.2)
         self.conv2 = DiNe_conv_layer(c_out, c_out, neigh_orders)
+        self.bn2 = nn.BatchNorm1d(c_out)
         self.first = first_in_block
     
     def forward(self, x):
         res = x
         
         x = self.conv1(x)
-        x = self.bn(x)
+        x = self.bn1(x)
         x = self.relu(x)
         
         x = self.conv2(x)
-        x = self.bn(x)
+        x = self.bn2(x)
         
         if self.first:
             res = torch.cat((res,res),1)
@@ -411,34 +419,41 @@ class res_block(nn.Module):
     
     
 class ResNet(nn.Module):
-    def __init__(self):
+    def __init__(self, in_c, out_c):
         super(ResNet, self).__init__()
         neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
         
-        self.conv1 =  DiNe_conv_layer(2, 64, neigh_orders_40962)
+        self.conv1 =  DiNe_conv_layer(in_c, 64, neigh_orders_40962)
         self.bn1 = nn.BatchNorm1d(64)
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU(0.2)
         
         self.pool1 = pool_layer(neigh_orders_40962, 'max')
-        self.res1 = res_block(64, 64, neigh_orders_10242)
+        self.res1_1 = res_block(64, 64, neigh_orders_10242)
+        self.res1_2 = res_block(64, 64, neigh_orders_10242)
+        self.res1_3 = res_block(64, 64, neigh_orders_10242)
         
         self.pool2 = pool_layer(neigh_orders_10242, 'max')
         self.res2_1 = res_block(64, 128, neigh_orders_2562, True)
-        self.res2 = res_block(128, 128, neigh_orders_2562)
+        self.res2_2 = res_block(128, 128, neigh_orders_2562)
+        self.res2_3 = res_block(128, 128, neigh_orders_2562)
         
         self.pool3 = pool_layer(neigh_orders_2562, 'max')
         self.res3_1 = res_block(128, 256, neigh_orders_642, True)
-        self.res3 = res_block(256, 256, neigh_orders_642)
+        self.res3_2 = res_block(256, 256, neigh_orders_642)
+        self.res3_3 = res_block(256, 256, neigh_orders_642)
         
         self.pool4 = pool_layer(neigh_orders_642, 'max')
         self.res4_1 = res_block(256, 512, neigh_orders_162, True)
-        self.res4 = res_block(512, 512, neigh_orders_162)
+        self.res4_2 = res_block(512, 512, neigh_orders_162)
+        self.res4_3 = res_block(512, 512, neigh_orders_162)
                 
         self.pool5 = pool_layer(neigh_orders_162, 'max')
         self.res5_1 = res_block(512, 1024, neigh_orders_42, True)
-        self.res5 = res_block(1024, 1024, neigh_orders_42)
+        self.res5_2 = res_block(1024, 1024, neigh_orders_42)
+        self.res5_3 = res_block(1024, 1024, neigh_orders_42)
         
-        self.fc = nn.Linear(1024, 2)
+        self.fc = nn.Linear(1024, out_c)
+        self.out = nn.Sigmoid()
         
     def forward(self, x):
         x = self.conv1(x)
@@ -446,30 +461,31 @@ class ResNet(nn.Module):
         x = self.relu(x)
         
         x = self.pool1(x)
-        x = self.res1(x)
-        x = self.res1(x)
-        x = self.res1(x)
+        x = self.res1_1(x)
+        x = self.res1_2(x)
+        x = self.res1_3(x)
         
         x = self.pool2(x)
         x = self.res2_1(x)
-        x = self.res2(x)
-        x = self.res2(x)
+        x = self.res2_2(x)
+        x = self.res2_3(x)
         
         x = self.pool3(x)
         x = self.res3_1(x)
-        x = self.res3(x)
-        x = self.res3(x)
+        x = self.res3_2(x)
+        x = self.res3_3(x)
                 
         x = self.pool4(x)
         x = self.res4_1(x)
-        x = self.res4(x)
-        x = self.res4(x)
+        x = self.res4_2(x)
+        x = self.res4_3(x)
         
         x = self.pool5(x)
         x = self.res5_1(x)
-        x = self.res5(x)
-        x = self.res5(x)
+        x = self.res5_2(x)
+        x = self.res5_3(x)
         
         x = torch.mean(x, 0, True)
         x = self.fc(x)
+        x = self.out(x)
         return x
