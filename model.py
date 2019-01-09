@@ -90,19 +90,19 @@ class Unet(nn.Module):
         self.down2 = down_block(conv_layer, chs[1], chs[2], neigh_orders_10242, neigh_orders_40962)
         self.down3 = down_block(conv_layer, chs[2], chs[3], neigh_orders_2562, neigh_orders_10242)
         self.down4 = down_block(conv_layer, chs[3], chs[4], neigh_orders_642, neigh_orders_2562)
-#       self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders_162, neigh_orders_642)
+        self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders_162, neigh_orders_642)
       
-#        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders_642, upconv_top_index_642, upconv_down_index_642)
+        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders_642, upconv_top_index_642, upconv_down_index_642)
         self.up2 = up_block(conv_layer, chs[4], chs[3], neigh_orders_2562, upconv_top_index_2562, upconv_down_index_2562)
         self.up3 = up_block(conv_layer, chs[3], chs[2], neigh_orders_10242, upconv_top_index_10242, upconv_down_index_10242)
         self.up4 = up_block(conv_layer, chs[2], chs[1], neigh_orders_40962, upconv_top_index_40962, upconv_down_index_40962)
         self.outc = nn.Sequential(
-                conv_layer(chs[1], chs[1], neigh_orders_40962),
-                nn.BatchNorm1d(chs[1]),
-                nn.LeakyReLU(0.2),
-                conv_layer(chs[1], chs[1], neigh_orders_40962),
-                nn.BatchNorm1d(chs[1]),
-                nn.LeakyReLU(0.2),
+#                conv_layer(chs[1], chs[1], neigh_orders_40962),
+#                nn.BatchNorm1d(chs[1]),
+#                nn.LeakyReLU(0.2),
+#                conv_layer(chs[1], chs[1], neigh_orders_40962),
+#                nn.BatchNorm1d(chs[1]),
+#                nn.LeakyReLU(0.2),
                 conv_layer(chs[1], out_ch, neigh_orders_40962)
                 )
                 
@@ -114,10 +114,10 @@ class Unet(nn.Module):
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-#        x6 = self.down5(x5)
+        x6 = self.down5(x5)
         
-#        x = self.up1(x6, x5)
-        x = self.up2(x5, x4)
+        x = self.up1(x6, x5)
+        x = self.up2(x, x4)
         x = self.up3(x, x3)
         x = self.up4(x, x2)
         x = self.outc(x)
