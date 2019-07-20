@@ -8,26 +8,27 @@ Created on Mon Nov 12 14:18:30 2018
 """
 
 import torch
-import numpy as np
 import torch.nn as nn
-from torch.autograd import Variable
-from torch.nn import init
 from utils import *
 from layers import upconv_layer, pool_layer, DiNe_conv_layer
 
 
 class down_block(nn.Module):
-    '''mean pooling => (conv => BN => ReLU) * 2'''
+    """mean pooling => (conv => BN => ReLU) * 2
+    
+    """
     def __init__(self, conv_layer, in_ch, out_ch, neigh_orders, pool_neigh_orders, first = False):
         super(down_block, self).__init__()
-        
+
+
+#        Batch norm version
         if first:
             self.block = nn.Sequential(
                 conv_layer(in_ch, out_ch, neigh_orders),
-                nn.BatchNorm1d(out_ch),
+                nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
                 nn.LeakyReLU(0.2, inplace=True),
                 conv_layer(out_ch, out_ch, neigh_orders),
-                nn.BatchNorm1d(out_ch),
+                nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
                 nn.LeakyReLU(0.2, inplace=True)
         )
             
@@ -35,15 +36,60 @@ class down_block(nn.Module):
             self.block = nn.Sequential(
                 pool_layer(pool_neigh_orders, 'mean'),
                 conv_layer(in_ch, out_ch, neigh_orders),
-                nn.BatchNorm1d(out_ch),
+                nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
                 nn.LeakyReLU(0.2, inplace=True),
                 conv_layer(out_ch, out_ch, neigh_orders),
-                nn.BatchNorm1d(out_ch),
+                nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
                 nn.LeakyReLU(0.2, inplace=True),
         )
+        
+        
+#        Instance norm version
+#        self.first = first
+#        if not first:
+#            self.pool = pool_layer(pool_neigh_orders, 'mean')
+#        
+#        self.conv1 = conv_layer(in_ch, out_ch, neigh_orders)
+#        self.in1 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
+#        self.relu = nn.LeakyReLU(0.2, inplace=True)
+#        self.conv2 = conv_layer(out_ch, out_ch, neigh_orders)
+#        self.in2 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
+                    
+        # without norm version
+#        if first:
+#            self.block = nn.Sequential(
+#                conv_layer(in_ch, out_ch, neigh_orders),
+#                nn.LeakyReLU(0.2, inplace=True),
+#                conv_layer(out_ch, out_ch, neigh_orders),
+#                nn.InstanceNorm1d(out_ch, momentum=0.1, affine=False, track_running_stats=False),
+#                nn.LeakyReLU(0.2, inplace=True)
+#        )
+#            
+#        else:
+#            self.block = nn.Sequential(
+#                pool_layer(pool_neigh_orders, 'mean'),
+#                conv_layer(in_ch, out_ch, neigh_orders),
+#                nn.LeakyReLU(0.2, inplace=True),
+#                conv_layer(out_ch, out_ch, neigh_orders),
+#                nn.LeakyReLU(0.2, inplace=True),
+#        )
+
+
 
     def forward(self, x):
+        # batch norm version
         x = self.block(x)
+        
+     # instance norm verison
+#        if not self.first:
+#             x = self.pool(x)
+#        x = self.conv1(x)      # 40962 * 32
+#        x = self.in1(x.transpose(0, 1).unsqueeze(0)) # 1*32*40962 
+#        x = self.relu(x.squeeze(0).transpose(0,1)) # 40962 * 32
+#        x = self.conv2(x)
+#        x = self.in2(x.transpose(0,1).unsqueeze(0))
+#        x = self.relu(x.squeeze(0).transpose(0,1))
+#        
         return x
 
 
@@ -52,50 +98,95 @@ class up_block(nn.Module):
         super(up_block, self).__init__()
         
         self.up = upconv_layer(in_ch, out_ch, upconv_top_index, upconv_down_index)
+        
+        # batch norm version
         self.double_conv = nn.Sequential(
              conv_layer(in_ch, out_ch, neigh_orders),
-             nn.BatchNorm1d(out_ch),
+             nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
              nn.LeakyReLU(0.2, inplace=True),
              conv_layer(out_ch, out_ch, neigh_orders),
-             nn.BatchNorm1d(out_ch),
+             nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
              nn.LeakyReLU(0.2, inplace=True)
         )
-        
+#        
+
+
+        # instance norm version
+#        self.conv1 = conv_layer(in_ch, out_ch, neigh_orders)
+#        self.in1 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
+#        self.relu = nn.LeakyReLU(0.2, inplace=True)
+#        self.conv2 = conv_layer(out_ch, out_ch, neigh_orders)
+#        self.in2 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
+
+
+
+#        without norm version
+#        self.double_conv = nn.Sequential(
+#             conv_layer(in_ch, out_ch, neigh_orders),
+#             nn.LeakyReLU(0.2, inplace=True),
+#             conv_layer(out_ch, out_ch, neigh_orders),
+#             nn.LeakyReLU(0.2, inplace=True)
+#        )
+                
 
     def forward(self, x1, x2):
+        
         x1 = self.up(x1)
         x = torch.cat((x1, x2), 1) 
+        
+        
+        # batch norm version
         x = self.double_conv(x)
+        
+        # instance norm version
+#        x = self.conv1(x)
+#        x = self.in1(x.transpose(0,1).unsqueeze(0))
+#        x = self.relu(x.squeeze(0).transpose(0,1))
+#        x = self.conv2(x)
+#        x = self.in2(x.transpose(0,1).unsqueeze(0))
+#        x = self.relu(x.squeeze(0).transpose(0,1))
+#        
         return x
     
 
 class Unet(nn.Module):
+    """Define the Spherical UNet structure
+
+    """    
     def __init__(self, in_ch, out_ch):
+        """ Initialize the Spherical UNet.
+
+        Parameters:
+            in_ch (int) - - input features/channels
+            out_ch (int) - - output features/channels
+        """
         super(Unet, self).__init__()
 
         #neigh_indices_10242, neigh_indices_2562, neigh_indices_642, neigh_indices_162, neigh_indices_42 = Get_indices_order()
         #neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
         
-        neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12 = Get_neighs_order()
+        neigh_orders = Get_neighs_order()
         upconv_top_index_40962, upconv_down_index_40962, upconv_top_index_10242, upconv_down_index_10242,  upconv_top_index_2562, upconv_down_index_2562,  upconv_top_index_642, upconv_down_index_642, upconv_top_index_162, upconv_down_index_162 = Get_upconv_index() 
 
         chs = [in_ch, 64, 128, 256, 512, 1024]
-
+        
         #if conv_type == "RePa":
          #   conv_layer = gCNN_conv_layer
         #if conv_type == "DiNe":
         conv_layer = DiNe_conv_layer
 
-        self.down1 = down_block(conv_layer, chs[0], chs[1], neigh_orders_40962, None, True)
-        self.down2 = down_block(conv_layer, chs[1], chs[2], neigh_orders_10242, neigh_orders_40962)
-        self.down3 = down_block(conv_layer, chs[2], chs[3], neigh_orders_2562, neigh_orders_10242)
-        self.down4 = down_block(conv_layer, chs[3], chs[4], neigh_orders_642, neigh_orders_2562)
-        self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders_162, neigh_orders_642)
+        self.down1 = down_block(conv_layer, chs[0], chs[1], neigh_orders[0], None, True)
+        self.down2 = down_block(conv_layer, chs[1], chs[2], neigh_orders[1], neigh_orders[0])
+        self.down3 = down_block(conv_layer, chs[2], chs[3], neigh_orders[2], neigh_orders[1])
+        self.down4 = down_block(conv_layer, chs[3], chs[4], neigh_orders[3], neigh_orders[2])
+        self.down5 = down_block(conv_layer, chs[4], chs[5], neigh_orders[4], neigh_orders[3])
       
-        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders_642, upconv_top_index_642, upconv_down_index_642)
-        self.up2 = up_block(conv_layer, chs[4], chs[3], neigh_orders_2562, upconv_top_index_2562, upconv_down_index_2562)
-        self.up3 = up_block(conv_layer, chs[3], chs[2], neigh_orders_10242, upconv_top_index_10242, upconv_down_index_10242)
-        self.up4 = up_block(conv_layer, chs[2], chs[1], neigh_orders_40962, upconv_top_index_40962, upconv_down_index_40962)
+        self.up1 = up_block(conv_layer, chs[5], chs[4], neigh_orders[3], upconv_top_index_642, upconv_down_index_642)
+        self.up2 = up_block(conv_layer, chs[4], chs[3], neigh_orders[2], upconv_top_index_2562, upconv_down_index_2562)
+        self.up3 = up_block(conv_layer, chs[3], chs[2], neigh_orders[1], upconv_top_index_10242, upconv_down_index_10242)
+        self.up4 = up_block(conv_layer, chs[2], chs[1], neigh_orders[0], upconv_top_index_40962, upconv_down_index_40962)
+        
+#        self.dp = nn.Dropout(p=0.4)
         self.outc = nn.Sequential(
 #                conv_layer(chs[1], chs[1], neigh_orders_40962),
 #                nn.BatchNorm1d(chs[1]),
@@ -103,7 +194,7 @@ class Unet(nn.Module):
 #                conv_layer(chs[1], chs[1], neigh_orders_40962),
 #                nn.BatchNorm1d(chs[1]),
 #                nn.LeakyReLU(0.2),
-                conv_layer(chs[1], out_ch, neigh_orders_40962)
+                nn.Linear(chs[1], out_ch)
                 )
                 
         
@@ -119,8 +210,10 @@ class Unet(nn.Module):
         x = self.up1(x6, x5)
         x = self.up2(x, x4)
         x = self.up3(x, x3)
-        x = self.up4(x, x2)
-        x = self.outc(x)
+        x = self.up4(x, x2) # 40962 * 32
+        
+#        x = self.dp(x) #40962 * 32
+        x = self.outc(x) # 40962 * 35
 #        x = self.tanh(x)
         return x
 

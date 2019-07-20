@@ -16,10 +16,10 @@ from torch.nn import init
 from utils import *
 
 
-class gCNN_conv_layer(nn.Module):
+class repa_conv_layer(nn.Module):
 
-    def __init__(self, in_feats, out_feats, neigh_orders, neigh_indices, neigh_weights):
-        super(gCNN_conv_layer, self).__init__()
+    def __init__(self, in_feats, out_feats, neigh_indices, neigh_weights):
+        super(repa_conv_layer, self).__init__()
 
         self.in_feats = in_feats
         self.out_feats = out_feats
@@ -27,8 +27,8 @@ class gCNN_conv_layer(nn.Module):
         self.weight = nn.Linear(25 * in_feats, out_feats)
         self.nodes_number = neigh_indices.shape[0]
         
-        self.neigh_weights = np.reshape(np.tile(neigh_weights, self.in_feats), (neigh_weights.shape[0],neigh_weights.shape[1],3,-1)).astype(np.float32)
-        self.neigh_weights = torch.from_numpy(self.neigh_weights).cuda()    
+        neigh_weights = np.reshape(np.tile(neigh_weights, self.in_feats), (neigh_weights.shape[0],neigh_weights.shape[1],3,-1)).astype(np.float32)
+        self.neigh_weights = torch.from_numpy(neigh_weights).cuda()    
         
     def forward(self, x):
       
@@ -67,7 +67,7 @@ class DiNe_conv_layer(nn.Module):
 
 class pool_layer(nn.Module):
 
-    def __init__(self, neigh_orders, pooling_type):
+    def __init__(self, neigh_orders, pooling_type='mean'):
         super(pool_layer, self).__init__()
 
         self.neigh_orders = neigh_orders
