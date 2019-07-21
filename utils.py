@@ -61,7 +61,6 @@ def Get_neighs_order():
     
     return neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12
   
-    
 def get_neighs_order(order_path):
     adj_mat_order = sio.loadmat(order_path)
     adj_mat_order = adj_mat_order['adj_mat_order']
@@ -72,6 +71,26 @@ def get_neighs_order(order_path):
     
     return neigh_orders
 
+
+def Get_2ring_neighs_order():
+    neigh_orders_2ring_40962 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_40962.mat')
+    neigh_orders_2ring_10242 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_10242.mat')
+    neigh_orders_2ring_2562 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_2562.mat')
+    neigh_orders_2ring_642 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_642.mat')
+    neigh_orders_2ring_162 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_162.mat')
+    neigh_orders_2ring_42 = get_2ring_neighs_order('neigh_indices/adj_mat_order_2ring_42.mat')
+    
+    return neigh_orders_2ring_40962, neigh_orders_2ring_10242, neigh_orders_2ring_2562, neigh_orders_2ring_642, neigh_orders_2ring_162, neigh_orders_2ring_42
+
+def get_2ring_neighs_order(order_path):
+    adj_mat_order = sio.loadmat(order_path)
+    adj_mat_order = adj_mat_order['adj_mat_order_2ring']
+    neigh_orders = np.zeros((len(adj_mat_order), 19))
+    neigh_orders[:,0:18] = adj_mat_order-1
+    neigh_orders[:,18] = np.arange(len(adj_mat_order))
+    neigh_orders = np.ravel(neigh_orders).astype(np.int64)
+    
+    return neigh_orders
 
 
 def Get_upconv_index():
@@ -131,7 +150,6 @@ def compute_weight():
 
     return num
     
-
 
 def Get_upsample_neighs_order():
     

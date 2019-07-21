@@ -46,10 +46,10 @@ class repa_conv_layer(nn.Module):
         return out
 
 
-class DiNe_conv_layer(nn.Module):
+class onering_conv_layer(nn.Module):
 
     def __init__(self, in_feats, out_feats, neigh_orders, neigh_indices=None, neigh_weights=None):
-        super( DiNe_conv_layer, self).__init__()
+        super(onering_conv_layer, self).__init__()
 
         self.in_feats = in_feats
         self.out_feats = out_feats
@@ -63,6 +63,27 @@ class DiNe_conv_layer(nn.Module):
                 
         out_features = self.weight(mat)
         return out_features
+    
+    
+class tworing_conv_layer(nn.Module):
+
+    def __init__(self, in_feats, out_feats, neigh_orders):
+        super(tworing_conv_layer, self).__init__()
+
+        self.in_feats = in_feats
+        self.out_feats = out_feats
+        self.neigh_orders = neigh_orders
+        
+        self.weight = nn.Linear(19 * in_feats, out_feats)
+        
+    def forward(self, x):
+       
+        mat = x[self.neigh_orders].view(len(x), 19*self.in_feats)
+                
+        out_features = self.weight(mat)
+        return out_features
+        
+
     
 
 class pool_layer(nn.Module):
@@ -81,29 +102,14 @@ class pool_layer(nn.Module):
         if self.pooling_type == "mean":
             x = torch.mean(x, 2)
         if self.pooling_type == "max":
-            x = torch.max(x, 2)[0]
+            x = torch.max(x, 2)
+            assert(x[0].size() == torch.Size([num_nodes, feat_num]))
+            return x[0], x[1]
+        
         assert(x.size() == torch.Size([num_nodes, feat_num]))
                 
         return x
     
-class SegNet_pool_layer(nn.Module):
-
-    def __init__(self, num_nodes, neigh_orders, pooling_type):
-        super(SegNet_pool_layer, self).__init__()
-
-        self.num_nodes = num_nodes
-        self.neigh_orders = neigh_orders
-        
-    def forward(self, x):
-       
-        feat_num = x.size()[1]
-        x = x[self.neigh_orders[0:self.num_nodes*7]].view(self.num_nodes, feat_num, 7)
-        x = torch.max(x, 2)
-        assert(x[0].size() == torch.Size([self.num_nodes, feat_num]))
-                
-        return x[0], x[1]
-
-
         
 class upconv_layer(nn.Module):
 
@@ -132,21 +138,38 @@ class upconv_layer(nn.Module):
 
 class upsample_interpolation(nn.Module):
 
-    def __init__(self, num_nodes, upsample_neighs_order):
+    def __init__(self, upsample_neighs_order):
         super(upsample_interpolation, self).__init__()
 
-        self.num_nodes = num_nodes    
         self.upsample_neighs_order = upsample_neighs_order
        
     def forward(self, x):
        
+        num_nodes = x.size()[0] * 4 - 6
         feat_num = x.size()[1]
-        x1 = x[self.upsample_neighs_order].view(self.num_nodes - x.size()[0], feat_num, 2)
+        x1 = x[self.upsample_neighs_order].view(num_nodes - x.size()[0], feat_num, 2)
         x1 = torch.mean(x1, 2)
         x = torch.cat((x,x1),0)
                     
         return x
 
+
+class upsample_fixindex(nn.Module):
+
+    def __init__(self, upsample_neighs_order):
+        super(upsample_fixindex, self).__init__()
+
+        self.upsample_neighs_order = upsample_neighs_order
+       
+    def forward(self, x):
+       
+        num_nodes = x.size()[0] * 4 - 6
+        feat_num = x.size()[1]
+        x1 = torch.zeros(num_nodes - x.size()[0], feat_num).cuda()
+        x = torch.cat((x,x1),0)
+                    
+        return x
+    
       
 class upsample_maxindex(nn.Module):
 

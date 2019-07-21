@@ -84,14 +84,11 @@ test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_siz
 #    dataiter = iter(test_dataloader)
 #    data, target, file = dataiter.next()
 
-#pooling_type = "mean"  # "max" or "mean" 
-model = naive_16conv(3, 36)
-#model = Unet_infant(3, 36)
+model = SegNet_max(3, 36)                               #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
 model.cuda()
-model.load_state_dict(torch.load('/home/fenqiang/Spherical_U-Net/trained_models/neonate_naive_16conv.pkl'))
-#model.load_state_dict(torch.load('/home/fenqiang/Spherical_U-Net/trained_models/neonate_spherical_unet.pkl'))
+model.load_state_dict(torch.load('/home/fenqiang/Spherical_U-Net/trained_models/neonate_SegNet_max.pkl'))  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 model.eval()
 
 dice_all = np.zeros((len(test_dataloader),36))
@@ -110,7 +107,8 @@ for batch_idx, (data, target, file) in enumerate(test_dataloader):
     pred = prediction.max(1)[1]
     dice_all[batch_idx,:] = compute_dice(pred, target)
     pred = pred.cpu().numpy()
-    np.savetxt('/media/fenqiang/DATA/unc/Data/NeonateParcellation/result/naive_16conv/' + file[0].split('/')[-1].split('.')[0] + '.txt', pred) 
+    np.savetxt('/media/fenqiang/DATA/unc/Data/NeonateParcellation/result/SegNet_max/' + file[0].split('/')[-1].split('.')[0] + '.txt', 
+               pred)                                                      #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 print('every subject mean dice: ', np.mean(dice_all, axis=1))
 print('every roi mean dice: ', np.mean(dice_all, axis=0))

@@ -78,16 +78,12 @@ fold4 = '/media/fenqiang/DATA/unc/Data/NeonateParcellation/format_dataset/90/fol
 fold5 = '/media/fenqiang/DATA/unc/Data/NeonateParcellation/format_dataset/90/fold5'
 fold6 = '/media/fenqiang/DATA/unc/Data/NeonateParcellation/format_dataset/90/fold6'
 
-train_dataset = BrainSphere(fold1, fold3)
+train_dataset = BrainSphere(fold3, fold2)          # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-val_dataset = BrainSphere(fold2)
+val_dataset = BrainSphere(fold1)                  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-pooling_type = "mean"  # "max" or "mean" 
-
-#model = naive_16conv(3, 36) 
-#model = Unet_infant(3, 36)
-model = UNet_repa(3, 36)
+model = SegNet_max(3, 36)                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 print("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
 model.cuda(cuda)
@@ -195,5 +191,4 @@ for epoch in range(100):
 #       # a = val_train_during_training()
 #        #print("train Dice:", a)
         
-    torch.save(model.state_dict(), os.path.join("neonate_UNet_repa.pkl"))
-  
+    torch.save(model.state_dict(), os.path.join("neonate_SegNet_max.pkl"))        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Modify it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
