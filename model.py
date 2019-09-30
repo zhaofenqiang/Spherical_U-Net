@@ -44,52 +44,10 @@ class down_block(nn.Module):
         )
         
         
-#        Instance norm version
-#        self.first = first
-#        if not first:
-#            self.pool = pool_layer(pool_neigh_orders, 'mean')
-#        
-#        self.conv1 = conv_layer(in_ch, out_ch, neigh_orders)
-#        self.in1 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
-#        self.relu = nn.LeakyReLU(0.2, inplace=True)
-#        self.conv2 = conv_layer(out_ch, out_ch, neigh_orders)
-#        self.in2 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
-                    
-        # without norm version
-#        if first:
-#            self.block = nn.Sequential(
-#                conv_layer(in_ch, out_ch, neigh_orders),
-#                nn.LeakyReLU(0.2, inplace=True),
-#                conv_layer(out_ch, out_ch, neigh_orders),
-#                nn.InstanceNorm1d(out_ch, momentum=0.1, affine=False, track_running_stats=False),
-#                nn.LeakyReLU(0.2, inplace=True)
-#        )
-#            
-#        else:
-#            self.block = nn.Sequential(
-#                pool_layer(pool_neigh_orders, 'mean'),
-#                conv_layer(in_ch, out_ch, neigh_orders),
-#                nn.LeakyReLU(0.2, inplace=True),
-#                conv_layer(out_ch, out_ch, neigh_orders),
-#                nn.LeakyReLU(0.2, inplace=True),
-#        )
-
-
-
     def forward(self, x):
         # batch norm version
         x = self.block(x)
         
-     # instance norm verison
-#        if not self.first:
-#             x = self.pool(x)
-#        x = self.conv1(x)      # 40962 * 32
-#        x = self.in1(x.transpose(0, 1).unsqueeze(0)) # 1*32*40962 
-#        x = self.relu(x.squeeze(0).transpose(0,1)) # 40962 * 32
-#        x = self.conv2(x)
-#        x = self.in2(x.transpose(0,1).unsqueeze(0))
-#        x = self.relu(x.squeeze(0).transpose(0,1))
-#        
         return x
 
 
@@ -108,44 +66,13 @@ class up_block(nn.Module):
              nn.BatchNorm1d(out_ch, momentum=0.15, affine=True, track_running_stats=False),
              nn.LeakyReLU(0.2, inplace=True)
         )
-#        
-
-
-        # instance norm version
-#        self.conv1 = conv_layer(in_ch, out_ch, neigh_orders)
-#        self.in1 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
-#        self.relu = nn.LeakyReLU(0.2, inplace=True)
-#        self.conv2 = conv_layer(out_ch, out_ch, neigh_orders)
-#        self.in2 = nn.InstanceNorm1d(out_ch, momentum=0.1, affine=True, track_running_stats=True)
-
-
-
-#        without norm version
-#        self.double_conv = nn.Sequential(
-#             conv_layer(in_ch, out_ch, neigh_orders),
-#             nn.LeakyReLU(0.2, inplace=True),
-#             conv_layer(out_ch, out_ch, neigh_orders),
-#             nn.LeakyReLU(0.2, inplace=True)
-#        )
-                
+      
 
     def forward(self, x1, x2):
-        
         x1 = self.up(x1)
         x = torch.cat((x1, x2), 1) 
-        
-        
-        # batch norm version
         x = self.double_conv(x)
         
-        # instance norm version
-#        x = self.conv1(x)
-#        x = self.in1(x.transpose(0,1).unsqueeze(0))
-#        x = self.relu(x.squeeze(0).transpose(0,1))
-#        x = self.conv2(x)
-#        x = self.in2(x.transpose(0,1).unsqueeze(0))
-#        x = self.relu(x.squeeze(0).transpose(0,1))
-#        
         return x
     
 

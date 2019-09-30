@@ -4,3 +4,5 @@ __*__
 trained_models
 *.pkl
 prediction_results/
+train_NAMIC.py
+test_NAMIC.py

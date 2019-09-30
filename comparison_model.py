@@ -16,6 +16,17 @@ from utils import *
 from layers import *
 
 class naive_16conv(nn.Module):
+    """Define the baseline architecture of 16 convolutional layers
+    
+    Parameters:
+            in_ch (int) - - input features/channels
+            out_ch (int) - - output features/channels    
+            
+    Input: 
+        N x in_ch,tensor
+    Return:
+        N x out_ch, tensor
+    """    
 
     def __init__(self, in_ch, out_ch, conv_type='one_ring'):
         super(naive_16conv, self).__init__()
@@ -49,7 +60,9 @@ class naive_16conv(nn.Module):
 
 
 class down_block(nn.Module):
-    """mean pooling => (conv => BN => ReLU) * 2
+    """
+    downsampling block in spherical unet
+    mean pooling => (conv => BN => ReLU) * 2
     
     """
     def __init__(self, conv_layer, in_ch, out_ch, neigh_orders, pool_neigh_orders, first = False):
@@ -87,6 +100,15 @@ class down_block(nn.Module):
 
 
 class up_block(nn.Module):
+    """Define the upsamping block in spherica uent
+    upconv => (conv => BN => ReLU) * 2
+    
+    Parameters:
+            in_ch (int) - - input features/channels
+            out_ch (int) - - output features/channels    
+            neigh_orders (tensor, int)  - - conv layer's filters' neighborhood orders
+            
+    """    
     def __init__(self, conv_layer, in_ch, out_ch, neigh_orders, upconv_top_index, upconv_down_index):
         super(up_block, self).__init__()
         
@@ -112,7 +134,7 @@ class up_block(nn.Module):
     
 
 class Unet_infant(nn.Module):
-    """Define the Spherical UNet structure for infant dataset
+    """Define the Spherical UNet structure for spherical cortical surface datra
 
     """    
     def __init__(self, in_ch, out_ch):
@@ -176,7 +198,7 @@ class Unet_infant(nn.Module):
 
 
 class Unet_18(nn.Module):
-    """Define the UNet small structure for infant dataset
+    """Define the UNet18 structure for spherical cortical surface datra
 
     """    
     def __init__(self, in_ch, out_ch):
@@ -221,7 +243,7 @@ class Unet_18(nn.Module):
     
     
 class Unet_2ring(nn.Module):
-    """Define the Spherical UNet using 2ring filter for infant dataset
+    """Define the Spherical UNet using 2ring filter for spherical surface data
 
     """    
     def __init__(self, in_ch, out_ch):
@@ -272,6 +294,9 @@ class Unet_2ring(nn.Module):
     
     
 class Unet_repa(nn.Module):
+    """The Spherical UNet architecture using rectangular patch
+
+    """  
 
     def __init__(self, in_ch, out_ch):
         super(Unet_repa, self).__init__()
@@ -483,7 +508,12 @@ class fcn(nn.Module):
 
 
 class SegNet(nn.Module):
-
+    """
+    The segnet architecture for icosahedron discretized spherical surface data
+    
+    Parameters:
+        up_layer: upsample_interpolation or upsample_fixindex
+    """
     def __init__(self, in_ch, out_ch, up_layer):
         super(SegNet, self).__init__()
         
@@ -601,6 +631,9 @@ class SegNet(nn.Module):
 
 
 class SegNet_max(nn.Module):
+    """
+    SegNet architecture with upsampling using maxpooling indices for spherical data
+    """
 
     def __init__(self, in_ch, out_ch):
         super(SegNet_max, self).__init__()

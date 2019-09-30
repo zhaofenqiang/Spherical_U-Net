@@ -11,13 +11,21 @@ This is for brain parcellation. Implement the Spherical U-Net
 import torch
 import numpy as np
 import torch.nn as nn
-from torch.autograd import Variable
-from torch.nn import init
-from utils import *
 
 
 class repa_conv_layer(nn.Module):
-
+    """Define the convolutional layer on icosahedron discretized sphere using 
+    rectagular filter in tangent plane
+    
+    Parameters:
+            in_feats (int) - - input features/channels
+            out_feats (int) - - output features/channels    
+            
+    Input: 
+        N x in_feats, tensor
+    Return:
+        N x out_feats, tensor
+    """    
     def __init__(self, in_feats, out_feats, neigh_indices, neigh_weights):
         super(repa_conv_layer, self).__init__()
 
@@ -47,7 +55,18 @@ class repa_conv_layer(nn.Module):
 
 
 class onering_conv_layer(nn.Module):
-
+    """The convolutional layer on icosahedron discretized sphere using 
+    1-ring filter
+    
+    Parameters:
+            in_feats (int) - - input features/channels
+            out_feats (int) - - output features/channels
+            
+    Input: 
+        N x in_feats tensor
+    Return:
+        N x out_feats tensor
+    """  
     def __init__(self, in_feats, out_feats, neigh_orders, neigh_indices=None, neigh_weights=None):
         super(onering_conv_layer, self).__init__()
 
@@ -66,7 +85,18 @@ class onering_conv_layer(nn.Module):
     
     
 class tworing_conv_layer(nn.Module):
-
+    """The convolutional layer on icosahedron discretized sphere using 
+    2-ring filter
+    
+    Parameters:
+            in_feats (int) - - input features/channels
+            out_feats (int) - - output features/channels
+            
+    Input: 
+        N x in_feats tensor
+    Return:
+        N x out_feats tensor
+    """  
     def __init__(self, in_feats, out_feats, neigh_orders):
         super(tworing_conv_layer, self).__init__()
 
@@ -85,8 +115,16 @@ class tworing_conv_layer(nn.Module):
         
 
     
-
 class pool_layer(nn.Module):
+    """
+    The pooling layer on icosahedron discretized sphere using 1-ring filter
+    
+    Input: 
+        N x D tensor
+    Return:
+        ((N+6)/4) x D tensor
+    
+    """  
 
     def __init__(self, neigh_orders, pooling_type='mean'):
         super(pool_layer, self).__init__()
@@ -112,6 +150,15 @@ class pool_layer(nn.Module):
     
         
 class upconv_layer(nn.Module):
+    """
+    The transposed convolution layer on icosahedron discretized sphere using 1-ring filter
+    
+    Input: 
+        N x in_feats, tensor
+    Return:
+        ((Nx4)-6) x out_feats, tensor
+    
+    """  
 
     def __init__(self, in_feats, out_feats, upconv_top_index, upconv_down_index):
         super(upconv_layer, self).__init__()
@@ -137,6 +184,15 @@ class upconv_layer(nn.Module):
 
 
 class upsample_interpolation(nn.Module):
+    """
+    The upsampling layer on icosahedron discretized sphere using interpolation
+    
+    Input: 
+        N x in_feats, tensor
+    Return:
+        ((Nx4)-6) x in_feats, tensor
+    
+    """  
 
     def __init__(self, upsample_neighs_order):
         super(upsample_interpolation, self).__init__()
@@ -155,7 +211,16 @@ class upsample_interpolation(nn.Module):
 
 
 class upsample_fixindex(nn.Module):
-
+    """
+    The upsampling layer on icosahedron discretized sphere using fixed indices 0,
+    padding new vertices with 0
+    
+    Input: 
+        N x in_feats, tensor
+    Return:
+        ((Nx4)-6) x in_feats, tensor
+    
+    """  
     def __init__(self, upsample_neighs_order):
         super(upsample_fixindex, self).__init__()
 
@@ -172,6 +237,15 @@ class upsample_fixindex(nn.Module):
     
       
 class upsample_maxindex(nn.Module):
+    """
+    The upsampling layer on icosahedron discretized sphere using max indices.
+    
+    Input: 
+        N x in_feats, tensor
+    Return:
+        ((Nx4)-6) x in_feats, tensor
+    
+    """  
 
     def __init__(self, num_nodes, neigh_orders):
         super(upsample_maxindex, self).__init__()
