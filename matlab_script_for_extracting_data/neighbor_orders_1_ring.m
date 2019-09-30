@@ -2,7 +2,7 @@ clc;
 clear;
 
 %% caculate standatd faces and adjacency matrix
-sphere_163842 = mvtk_read('/media/fenqiang/DATA/unc/Data/ForFenqiang/Year0/neo-0004-2-T/lh.AlignedToUNCAtlasResampled.SphereSurf.vtk');
+sphere_163842 = mvtk_read('/media/fenqiang/DATA/unc/Data/Template/sphere_163842.vtk');
 faces = sphere_163842.faces;
 pts = sphere_163842.vertices;
 
@@ -59,17 +59,19 @@ adj_mat_order = zeros(length(adj_mat_40962), 6);
 for i = 1:length(adj_mat_40962)
     neighs = pts(adj_mat_40962(i,:), :); 
     center_pt = pts(i,:);
-    neighs_angle = sort_neighs(neighs, center_pt);
+    neighs_angle = compute_angles(neighs, center_pt);
+    neighs_angle = neighs_angle + pi/4;
+    neighs_angle = mod(neighs_angle, 2*pi);
     [~, temp] = sort(neighs_angle);
     adj_mat_order(i,:) = adj_mat_40962(i,temp);
 end
 
-save(strcat('/media/fenqiang/DATA/unc/Data/MissingDataPrediction', '/adj_mat_order_40962.mat'), 'adj_mat_order'); 
+save(strcat('/home/fenqiang/Spherical_U-Net/neigh_indices', '/adj_mat_order_40962.mat'), 'adj_mat_order'); 
 
 
 %% others 
 adj_mat_intermediate = adj_mat_40962;
-nums = [10242, 2562,642,162,42,12];
+nums = [10242, 2562, 642, 162, 42, 12];
 for n = 1:length(nums)
    
     num = nums(n);
@@ -95,12 +97,14 @@ for n = 1:length(nums)
     for i = 1:length(adj_mat)
         neighs = pts(adj_mat(i,:), :); 
         center_pt = pts(i,:);
-        neighs_angle = sort_neighs(neighs, center_pt);
+        neighs_angle = compute_angles(neighs, center_pt);
+        neighs_angle = neighs_angle + pi/4;
+        neighs_angle = mod(neighs_angle, 2*pi);
         [~, temp] = sort(neighs_angle);
         adj_mat_order(i,:) = adj_mat(i,temp);
     end
     
     adj_mat_intermediate = adj_mat;
-    save(strcat('/media/fenqiang/DATA/unc/Data/MissingDataPrediction', '/adj_mat_order_', num2str(num), '.mat'), 'adj_mat_order'); 
+    save(strcat('/home/fenqiang/Spherical_U-Net/neigh_indices', '/adj_mat_order_', num2str(num), '.mat'), 'adj_mat_order'); 
     
 end
