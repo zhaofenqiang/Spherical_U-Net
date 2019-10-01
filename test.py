@@ -129,7 +129,7 @@ for batch_idx, (data, target, file) in enumerate(test_dataloader):
     pred = prediction.max(1)[1]
     dice_all[batch_idx,:] = compute_dice(pred, target)
     pred = pred.cpu().numpy()
-#    np.savetxt('/media/fenqiang/DATA/unc/Data/NeonateParcellation/result/'+model_name +'/' + file[0].split('/')[-1].split('.')[0] + '.txt', pred)                                                  
+    np.savetxt('/media/fenqiang/DATA/unc/Data/NeonateParcellation/result/'+model_name +'/' + file[0].split('/')[-1].split('.')[0] + '.txt', pred)                                                  
 
 print('every subject mean dice: ', np.mean(dice_all, axis=1))
 print('every roi mean dice: ', np.mean(dice_all, axis=0))
