@@ -7,7 +7,7 @@ The brain cortical surface lie in a non-Euclidean space represented by triangula
 
 ## 1-ring filter on sphere
 The convolution on the spherical surface is performed baed on the 1-ring filter
-![IcosahedronDiscretizedSphere](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_convolution.png).
+![convoulution](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_convolution.png).
 
 We provide 3 types of filter on the spherical surfaces.
 ![filters](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_filters.png).
