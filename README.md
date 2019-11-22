@@ -27,39 +27,93 @@ We provide 3 types of filter on the spherical surfaces.
 - pytorch (0.4.1+)
 - torchvision (0.2.1+)
 - tensorboardx (1.6+)
+- pyvista (0.22.4+)
 
-### Matlab Dependencies
-- mvtk_read
-- mvtk_write
-
-Setup a new conda environment with the required dependencies via:
+You can use conda to easily create an environment for the experiment using following command:
 ```
 conda create -n sunet python=3.6 
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
-``` 
-Activate newly created conda environment via:
+conda install -c conda-forge pyvista
+```
+Activate the newly created conda environment via:
 ```
 conda activate sunet
 ```
 
+
 ### Data preparation
-Modify the script [extract_feats.m](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/matlab_script_for_extracting_data/extract_feats.m) in [matlab_script_for_extracting_data](https://github.com/zhaofenqiang/Spherical_U-Net/tree/master/matlab_script_for_extracting_data) to extract surface data in .vtk to .mat. For example, the surface with N vertices is extracted to NxD feature in .mat, where D is the input channels of the Spherical U-Net. D is typically 3 for parcellation task, representing mean curvature, average convexity, and sulc depth.
+The input file is a **vtk** file containing the surfaces reconstructed from neuroimaging pipelines [[1]](https://www.sciencedirect.com/science/article/pii/S1361841515000559)[[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389). After reconstruction of cortical surface, it is required to use Freesurfer [[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389) to map inner cortical surface to spherical surface and further resample it with 40,962 vertices. Also, you may need to covert the surface from Freesurfer format to vtk format. In the vtk file, **curv** and **sulc** field attributes data are required for the parcellation, which represent mean curvature and average convexity, respectively. 
 
 ### Train
-After data prepration, modify the folder in [train.py](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/train.py) to match the training data in your own path. Then, run:
+After data prepration, modify the [train.py](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/train.py) file to match the training data in your own path. Then, run:
 ```
 python train.py
 ```
 
 ### Test
-Modify the test data folder in [test.py](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/test.py). Then, run:
+You can easily obtain the output parcellation maps on your surfaces via the following commands.
+To predict a single surface’ parcellation map:
 ```
-python test.py
+python predict.py -i input.vtk -o output.vtk
 ```
-The output is in .txt. Then modify the [write_prdicted_sphere.m](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/matlab_script_for_extracting_data/write_prdicted_sphere.m) to write the .txt to .vtk
+To predict the parcellation maps of multiple surfaces in the same folder:
+```
+python predict.py -in_folder -o out_folder.vtk
+```
+You can also view the help of the whole usage of this command by running 
+```
+python predict.py -h
+```
+```
+usage: predict.py [-h] [--model FILE] [--input INPUT] [--in_folder INPUT]
+                  [--output INPUT] [--out_folder INPUT]
+
+Predict parcellation map with 36 ROIs based on FreeSurfer protocol from input
+surfaces
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --model FILE, -m FILE
+                        Specify the file in which the model is stored
+                        (default: trained_models/left_hemi_40k_curv_sulc.pkl)
+  --input INPUT, -i INPUT
+                        filename of input surface (default: None)
+  --in_folder INPUT, -in_folder INPUT
+                        folder path for input files. Will parcelalte all the
+                        files end in .vtk in this folder. Accept input or
+                        in_folder. (default: surfaces/left_hemisphere)
+  --output INPUT, -o INPUT
+                        Filename of ouput surface. If not given, default is
+                        [input].parc.vtk (default: None)
+  --out_folder INPUT, -out_folder INPUT
+                        folder path for ouput surface. If not given, default
+                        is the same as input_folder. Accept output or
+                        out_folder. (default: None)
+```
+Troubleshoot notes:
+1. Remember to modify the model path [left_hemi_40k_curv_sulc.pkl](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/trained_models/left_hemi_40k_curv_sulc.pkl) and [right_hemi_40k_curv_sulc.pkl](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/trained_models/right_hemi_40k_curv_sulc.pkl) for left hemispheres and right hemispheres.
+2. The code requires `input` or `in_folder` option, not both, for single surface’ parcellation or all surfaces in the folder. 
+3. The input data should be end in .vtk.
+
+### Examples
+You can test the code using the example surfaces we provided in the `surfaces` folder. Simply run:
+```
+python predict.py -i surfaces/left_hemisphere/test1.lh.40k.vtk
+```
+You will get the corresponding output surface at the same folder with name `test1.lh.40k.parc.vtk`.
+Or, run the command for all the 5 surface in the same folder:
+```
+python predict.py -in_folder surfaces/left_hemisphere
+```
+Note that we also provide the ground truth parcellation maps in `par_fs_vec` field in the vtk file. So you can compare and compute the parcellation accuracy and Dice.
+
+### Visualization
+You can use [Paraview](https://www.paraview.org/) software to visualize the parcellated surface in VTK format. An example of the input curvature map and output parcellation map are shown below.
+
 
 ## Cite
 If you use this code for your research, please cite as:
 
 Fenqiang Zhao, et.al. Spherical U-Net on Cortical Surfaces: Methods and Applications. Information Processing in Medical Imaging (IPMI), 2019.
+
 
