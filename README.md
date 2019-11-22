@@ -108,7 +108,8 @@ python predict.py -in_folder surfaces/left_hemisphere
 Note that we also provide the ground truth parcellation maps in `par_fs_vec` field in the vtk file. So you can compare and compute the parcellation accuracy and Dice.
 
 ### Visualization
-You can use [Paraview](https://www.paraview.org/) software to visualize the parcellated surface in VTK format. An example of the input curvature map and output parcellation map are shown below.
+You can use [Paraview](https://www.paraview.org/) software to visualize the parcellated surface in VTK format. An example of the input curvature map and output parcellation map are shown below. More usages about Paraview please refer to [Paraview](https://www.paraview.org/).
+![paraview](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/paraview.png).
 
 
 ## Cite
