@@ -60,7 +60,7 @@ To predict the parcellation maps of multiple surfaces in the same folder:
 ```
 python predict.py -hemi left -l 7 -in_folder in_folder -out_folder out_folder
 ```
-You can also view the help of the whole usage of this command by running 
+You can also view the help information of the whole usage of this command by running 
 ```
 python predict.py -h
 ```
@@ -76,12 +76,15 @@ optional arguments:
                         Specify the hemisphere for parcellation, left or
                         right. (default: left)
   --level {7,8}, -l {7,8}
-                        Specify the level of the surfaces. Generally, level 7 spherical surface is with 40962 vertices, 8 is with
+                        Specify the level of the surfaces. Generally, level
+                        7 spherical surface is with 40962 vertices, 8 is with
                         163842 vertices. (default: 7)
   --input INPUT, -i INPUT
                         filename of input surface (default: None)
   --in_folder INPUT_FOLDER, -in_folder INPUT_FOLDER
-                        folder path for input files. Will parcelalte all the files end in .vtk in this folder. Accept input or                        in_folder. (default: None)
+                        folder path for input files. Will parcelalte all the
+                        files end in .vtk in this folder. Accept input or                        
+                        in_folder. (default: None)
   --output OUTPUT, -o OUTPUT
                         Filename of ouput surface. (default: [input].parc.vtk)
   --out_folder OUT_FOLDER, -out_folder OUT_FOLDER
@@ -112,4 +115,5 @@ You can use [Paraview](https://www.paraview.org/) software to visualize the parc
 If you use this code for your research, please cite as:
 
 Fenqiang Zhao, et.al. Spherical U-Net on Cortical Surfaces: Methods and Applications. Information Processing in Medical Imaging (IPMI), 2019.
+
 
