@@ -50,6 +50,7 @@ def get_weights(weight_path):
 
 
 def Get_neighs_order():
+    neigh_orders_163842 = get_neighs_order('neigh_indices/adj_mat_order_163842.mat')
     neigh_orders_40962 = get_neighs_order('neigh_indices/adj_mat_order_40962.mat')
     neigh_orders_10242 = get_neighs_order('neigh_indices/adj_mat_order_10242.mat')
     neigh_orders_2562 = get_neighs_order('neigh_indices/adj_mat_order_2562.mat')
@@ -58,7 +59,7 @@ def Get_neighs_order():
     neigh_orders_42 = get_neighs_order('neigh_indices/adj_mat_order_42.mat')
     neigh_orders_12 = get_neighs_order('neigh_indices/adj_mat_order_12.mat')
     
-    return neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12
+    return neigh_orders_163842, neigh_orders_40962, neigh_orders_10242, neigh_orders_2562, neigh_orders_642, neigh_orders_162, neigh_orders_42, neigh_orders_12
   
 def get_neighs_order(order_path):
     adj_mat_order = sio.loadmat(order_path)
@@ -94,13 +95,14 @@ def get_2ring_neighs_order(order_path):
 
 def Get_upconv_index():
     
+    upconv_top_index_163842, upconv_down_index_163842 = get_upconv_index('neigh_indices/adj_mat_order_163842.mat')
     upconv_top_index_40962, upconv_down_index_40962 = get_upconv_index('neigh_indices/adj_mat_order_40962.mat')
     upconv_top_index_10242, upconv_down_index_10242 = get_upconv_index('neigh_indices/adj_mat_order_10242.mat')
     upconv_top_index_2562, upconv_down_index_2562 = get_upconv_index('neigh_indices/adj_mat_order_2562.mat')
     upconv_top_index_642, upconv_down_index_642 = get_upconv_index('neigh_indices/adj_mat_order_642.mat')
     upconv_top_index_162, upconv_down_index_162 = get_upconv_index('neigh_indices/adj_mat_order_162.mat')
     
-    return  upconv_top_index_40962, upconv_down_index_40962, upconv_top_index_10242, upconv_down_index_10242,  upconv_top_index_2562, upconv_down_index_2562,  upconv_top_index_642, upconv_down_index_642, upconv_top_index_162, upconv_down_index_162 
+    return upconv_top_index_163842, upconv_down_index_163842, upconv_top_index_40962, upconv_down_index_40962, upconv_top_index_10242, upconv_down_index_10242,  upconv_top_index_2562, upconv_down_index_2562,  upconv_top_index_642, upconv_down_index_642, upconv_top_index_162, upconv_down_index_162 
 
 
 def get_upconv_index(order_path):  
