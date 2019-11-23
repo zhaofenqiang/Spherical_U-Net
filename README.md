@@ -42,7 +42,7 @@ conda activate sunet
 
 
 ### Data preparation
-The input file is a **vtk** file containing the surfaces reconstructed from neuroimaging pipelines [[1]](https://www.sciencedirect.com/science/article/pii/S1361841515000559)[[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389). After reconstruction of cortical surface, it is required to use Freesurfer [[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389) to map inner cortical surface to spherical surface and further resample it with 40,962 vertices. Also, you may need to covert the surface from Freesurfer format to vtk format. In the vtk file, **curv** and **sulc** field attributes data are required for the parcellation, which represent mean curvature and average convexity, respectively. 
+The input file is a cortical inner surface of one hemisphere in vtk format reconstructed from neuroimaging pipelines [[1]](https://www.sciencedirect.com/science/article/pii/S1361841515000559)[[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389), which has been resampled as either 40,962 or 163,842 vertices. Two features, i.e., mean curvature and average convexity, are required for the parcellation, denoted as “curv” and “sulc” field attributes in the vtk file, respectively. For resampling and feature computing, FreeSurfer [[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389) can be used. To be consistent with the trained model, gyral crests should have negative curvature values, while sulcal bottoms should have positive curvature values.
 
 ### Train
 After data prepration, modify the [train.py](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/train.py) file to match the training data in your own path. Then, run:
@@ -54,58 +54,54 @@ python train.py
 You can easily obtain the output parcellation maps on your surfaces via the following commands.
 To predict a single surface’ parcellation map:
 ```
-python predict.py -i input.vtk -o output.vtk
+python predict.py -hemi left -l 7 -i input.vtk -o output.vtk
 ```
 To predict the parcellation maps of multiple surfaces in the same folder:
 ```
-python predict.py -in_folder -o out_folder.vtk
+python predict.py -hemi left -l 7 -in_folder in_folder -out_folder out_folder
 ```
 You can also view the help of the whole usage of this command by running 
 ```
 python predict.py -h
 ```
 ```
-usage: predict.py [-h] [--model FILE] [--input INPUT] [--in_folder INPUT]
-                  [--output INPUT] [--out_folder INPUT]
+Usage: predict.py [-h] [--hemisphere {left,right}] [--level {7,8}]
+                  [--input INPUT] [--in_folder INPUT_FOLDER] [--output OUTPUT] [--out_folder OUT_FOLDER]
 
-Predict parcellation map with 36 ROIs based on FreeSurfer protocol from input
-surfaces
+Predict the parcellation maps with 36 regions from the input surfaces
 
 optional arguments:
   -h, --help            show this help message and exit
-  --model FILE, -m FILE
-                        Specify the file in which the model is stored
-                        (default: trained_models/left_hemi_40k_curv_sulc.pkl)
+  --hemisphere {left,right}, -hemi {left,right}
+                        Specify the hemisphere for parcellation, left or
+                        right. (default: left)
+  --level {7,8}, -l {7,8}
+                        Specify the level of the surfaces. Generally, level 7 spherical surface is with 40962 vertices, 8 is with
+                        163842 vertices. (default: 7)
   --input INPUT, -i INPUT
                         filename of input surface (default: None)
-  --in_folder INPUT, -in_folder INPUT
-                        folder path for input files. Will parcelalte all the
-                        files end in .vtk in this folder. Accept input or
-                        in_folder. (default: surfaces/left_hemisphere)
-  --output INPUT, -o INPUT
-                        Filename of ouput surface. If not given, default is
-                        [input].parc.vtk (default: None)
-  --out_folder INPUT, -out_folder INPUT
-                        folder path for ouput surface. If not given, default
-                        is the same as input_folder. Accept output or
-                        out_folder. (default: None)
+  --in_folder INPUT_FOLDER, -in_folder INPUT_FOLDER
+                        folder path for input files. Will parcelalte all the files end in .vtk in this folder. Accept input or                        in_folder. (default: None)
+  --output OUTPUT, -o OUTPUT
+                        Filename of ouput surface. (default: [input].parc.vtk)
+  --out_folder OUT_FOLDER, -out_folder OUT_FOLDER
+                        folder path for ouput surface. Accept output or
+                        out_folder. (default: [in_folder])
 ```
 Troubleshoot notes:
-1. Remember to modify the model path [left_hemi_40k_curv_sulc.pkl](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/trained_models/left_hemi_40k_curv_sulc.pkl) and [right_hemi_40k_curv_sulc.pkl](https://github.com/zhaofenqiang/Spherical_U-Net/blob/master/trained_models/right_hemi_40k_curv_sulc.pkl) for left hemispheres and right hemispheres.
-2. The code requires `input` or `in_folder` option, not both, for single surface’ parcellation or all surfaces in the folder. 
-3. The input data should be end in .vtk.
+1. The code requires `input` or `in_folder` option, not both, for single surface’ parcellation or all surfaces in the folder. 
+2. The input data should be end in .vtk.
 
 ### Examples
-You can test the code using the example surfaces we provided in the `surfaces` folder. Simply run:
+You can test the code using the example surfaces we provided in the `examples` folder. Simply run:
 ```
-python predict.py -i surfaces/left_hemisphere/test1.lh.40k.vtk
+python predict.py -hemi left -l 7 -i surfaces/left_hemisphere/40962/test1.lh.40k.vtk
 ```
 You will get the corresponding output surface at the same folder with name `test1.lh.40k.parc.vtk`.
-Or, run the command for all the 5 surface in the same folder:
+Or, run the command for all the 3 surface in the same folder:
 ```
-python predict.py -in_folder surfaces/left_hemisphere
+python predict.py -hemi left -l 7 -in_folder surfaces/left_hemisphere/40962
 ```
-Note that we also provide the ground truth parcellation maps in `par_fs_vec` field in the vtk file. So you can compare and compute the parcellation accuracy and Dice.
 
 ### Visualization
 You can use [Paraview](https://www.paraview.org/) software to visualize the parcellated surface in VTK format. An example of the input curvature map and output parcellation map are shown below. More usages about Paraview please refer to [Paraview](https://www.paraview.org/).
@@ -116,5 +112,4 @@ You can use [Paraview](https://www.paraview.org/) software to visualize the parc
 If you use this code for your research, please cite as:
 
 Fenqiang Zhao, et.al. Spherical U-Net on Cortical Surfaces: Methods and Applications. Information Processing in Medical Imaging (IPMI), 2019.
-
 
