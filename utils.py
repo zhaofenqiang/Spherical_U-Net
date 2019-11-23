@@ -11,6 +11,7 @@ import numpy as np
 import glob
 import os
 from numpy import median
+from vtk_io import read_vtk
 
 def Get_indices_order():
     neigh_indices_10242 = get_indices_order('neigh_indices/rec_neigh_indices_10242.mat')
@@ -28,8 +29,6 @@ def get_indices_order(indices_path):
     indices = indices[indices_path.split('/')[-1][10:-4]].astype(np.int64)
         
     return indices
-
-
 
 
 def Get_weights():
@@ -182,3 +181,29 @@ def get_upsample_order(mat_path, order_path):
         upsample_neighs_order[(i-next_nodes)*2:(i-next_nodes)*2+2]= parent_nodes      
     
     return upsample_neighs_order  
+
+
+def get_par_fs_to_36():
+    """ Preprocessing for parcellatiion label """
+    file = '/media/fenqiang/DATA/unc/Data/NITRC/data/left/train/MNBCP107842_809.lh.SphereSurf.Orig.Resample.vtk'
+    data = read_vtk(file)
+    par_fs = data['par_fs']
+    par_fs_label = np.sort(np.unique(par_fs))
+    par_dic = {}
+    for i in range(len(par_fs_label)):
+        par_dic[par_fs_label[i]] = i
+    return par_dic
+
+
+def get_par_36_to_fs_vec():
+    """ Preprocessing for parcellatiion label """
+    file = '/media/fenqiang/DATA/unc/Data/NITRC/data/left/train/MNBCP107842_809.lh.SphereSurf.Orig.Resample.vtk'
+    data = read_vtk(file)
+    par_fs = data['par_fs']
+    par_fs_vec = data['par_fs_vec']
+    par_fs_to_36 = get_par_fs_to_36()
+    par_36_to_fs = dict(zip(par_fs_to_36.values(), par_fs_to_36.keys()))
+    par_36_to_fs_vec = {}
+    for i in range(len(par_fs_to_36)):
+        par_36_to_fs_vec[i] = par_fs_vec[np.where(par_fs == par_36_to_fs[i])[0][0]]
+    return par_36_to_fs_vec

@@ -15,7 +15,7 @@ import numpy as np
 import glob
 import os
 
-from model import Unet
+from model import Unet_40k, Unet_160k
 from vtk_io import read_vtk, write_vtk
 from utils import get_par_fs_to_36, get_par_36_to_fs_vec
 
@@ -50,27 +50,31 @@ def inference(curv, sulc, model):
 
 
 if __name__ == "__main__":    
-    parser = argparse.ArgumentParser(description='Predict parcellation map with 36 ROIs based on FreeSurfer protocol from input surfaces',
+    parser = argparse.ArgumentParser(description='Predict the parcellation maps with 36 regions from the input surfaces',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--model', '-m', default='trained_models/left_hemi_40k_curv_sulc.pkl',
-                        metavar='FILE',
-                        help="Specify the file in which the model is stored")
+    parser.add_argument('--hemisphere', '-hemi', default='left',
+                        choices=['left', 'right'], 
+                        help="Specify the hemisphere for parcellation, left or right.")
+    parser.add_argument('--level', '-l', default='7',
+                        choices=['7', '8'],
+                        help="Specify the level of the surfaces. Generally, level 7 spherical surface is with 40962 vertices, 8 is with 163842 vertices.")
     parser.add_argument('--input', '-i', metavar='INPUT',
                         help='filename of input surface')
-    parser.add_argument('--in_folder', '-in_folder', default='surfaces/left_hemisphere',
-                        metavar='INPUT',
+    parser.add_argument('--in_folder', '-in_folder',
+                        metavar='INPUT_FOLDER',
                         help='folder path for input files. Will parcelalte all the files end in .vtk in this folder. Accept input or in_folder.')
-    parser.add_argument('--output', '-o', metavar='INPUT',
-                        help='Filename of ouput surface. If not given, default is [input].parc.vtk')
-    parser.add_argument('--out_folder', '-out_folder', metavar='INPUT',
-                        help='folder path for ouput surface. If not given, default is the same as input_folder. Accept output or out_folder.')
+    parser.add_argument('--output', '-o',  default='[input].parc.vtk', metavar='OUTPUT',
+                        help='Filename of ouput surface.')
+    parser.add_argument('--out_folder', '-out_folder', default='[in_folder]', metavar='OUT_FOLDER',
+                        help='folder path for ouput surface. Accept output or out_folder.')
 
     args =  parser.parse_args()
     in_file = args.input
     out_file = args.output
     in_folder = args.in_folder
     out_folder = args.out_folder
-    model_path = args.model
+    hemi = args.hemisphere
+    level = args.level   
 
     if in_file is not None and in_folder is not None:
         raise NotImplementedError('Only need in_put or in_folder. Not both.')
@@ -81,7 +85,16 @@ if __name__ == "__main__":
     if in_folder is not None and out_folder is None:
         out_folder = in_folder
     
-    model = Unet(2, 36)
+    if level == '7':
+        model = Unet_40k(2, 36)
+        model_path = '40k_curv_sulc.pkl'
+        n_vertices = 40962
+    else:
+        model = Unet_160k(2, 36)
+        model_path = '160k_curv_sulc.pkl'
+        n_vertices = 163842
+    
+    model_path = 'trained_models/' + hemi + '_hemi_' +  model_path
     model.cuda()
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -92,8 +105,11 @@ if __name__ == "__main__":
 
     if in_file is not None:
         data = read_vtk(in_file)
-        curv = torch.from_numpy(data['curv'][0:40962]).unsqueeze(1) # use curv data with 40k vertices
-        sulc = torch.from_numpy(data['sulc'][0:40962]).unsqueeze(1) # use sulc data with 40k vertices
+        curv_temp = data['curv']
+        if len(curv_temp) != n_vertices:
+            raise NotImplementedError('Input surfaces level is not consistent with the level '+ level + ' that the model was trained on.')
+        curv = torch.from_numpy(data['curv'][0:n_vertices]).unsqueeze(1) # use curv data with 40k vertices
+        sulc = torch.from_numpy(data['sulc'][0:n_vertices]).unsqueeze(1) # use sulc data with 40k vertices
         pred = inference(curv, sulc, model)
         data['par_fs'] = np.array([par_36_to_fs[i] for i in pred])
         data['par_fs_vec'] = np.array([par_36_to_fs_vec[i] for i in pred])
@@ -101,13 +117,15 @@ if __name__ == "__main__":
    
     else:
         test_dataset = BrainSphere(in_folder)
+        if len(test_dataset[0][0]['curv']) != n_vertices:
+            raise NotImplementedError('Input surfaces level is not consistent with the level '+ level + ' that the model was trained on.')
         test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, pin_memory=True)
         for batch_idx, (data, file) in enumerate(test_dataloader):
             for key, value in data.items():
                 data[key] = value.squeeze(0)
             file = file[0]    
-            curv = data['curv'][0:40962].unsqueeze(1) # use curv data with 40k vertices
-            sulc = data['sulc'][0:40962].unsqueeze(1) # use sulc data with 40k vertices
+            curv = data['curv'][0:n_vertices].unsqueeze(1) 
+            sulc = data['sulc'][0:n_vertices].unsqueeze(1) 
             for key, value in data.items():
                 data[key] = value.numpy()
                 
