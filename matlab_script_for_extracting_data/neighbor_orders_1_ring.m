@@ -36,6 +36,22 @@ for i = 1:length(pairs)
     end
 end
 
+adj_mat_163842_for_nitrc = adj_mat_163842;
+for i = 1:12
+    adj_mat_163842_for_nitrc(i,6) = i;
+end
+adj_mat_order = zeros(length(adj_mat_163842_for_nitrc), 6);
+for i = 1:length(adj_mat_163842_for_nitrc)
+    neighs = pts(adj_mat_163842_for_nitrc(i,:), :); 
+    center_pt = pts(i,:);
+    neighs_angle = compute_angles(neighs, center_pt);
+    neighs_angle = neighs_angle + pi/4;
+    neighs_angle = mod(neighs_angle, 2*pi);
+    [~, temp] = sort(neighs_angle);
+    adj_mat_order(i,:) = adj_mat_163842_for_nitrc(i,temp);
+end
+save(strcat('/home/fenqiang/Spherical_U-Net/neigh_indices', '/adj_mat_order_163842.mat'), 'adj_mat_order'); 
+
 %% 40962 adj_mat and its orders
 adj_mat_40962 = zeros(40962,6);
 for i = 1:40962
