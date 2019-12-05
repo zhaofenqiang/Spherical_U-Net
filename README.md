@@ -1,21 +1,6 @@
 # Spherical U-Net on Cortical Surfaces
 This is the code for paper ["Spherical U-Net on Cortical Surfaces: Methods and Applications"](https://link.springer.com/chapter/10.1007/978-3-030-20351-1_67). The code in the main directory is for the parcellation task. The code in the [prediction](https://github.com/zhaofenqiang/Spherical_U-Net/tree/master/prediction) directory is for the prediction task.
 
-## Data structure
-The brain cortical surface lie in a non-Euclidean space represented by triangular meshes.
-![CorticalSurface](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_OrigSurf_SphereSurf.png) ![IcosahedronDiscretizedSphere](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_12-10242_spherical_surfaces.png) 
-
-## 1-ring filter on sphere
-The convolution on the spherical surface is performed baed on the 1-ring filter
-![convoulution](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_convolution.png).
-
-We provide 3 types of filter on the spherical surfaces.
-![filters](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_filters.png).
-
-## Spherical U-Net architecture
-![sphericaluent](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_unet.png).
-
-
 ## How to use it
 ### Prerequisites
 - Linux
@@ -39,7 +24,6 @@ Activate the newly created conda environment via:
 ```
 conda activate sunet
 ```
-
 
 ### Data preparation
 The input file is a cortical inner surface of one hemisphere in vtk format reconstructed from neuroimaging pipelines [[1]](https://www.sciencedirect.com/science/article/pii/S1361841515000559)[[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389), which has been resampled as either 40,962 or 163,842 vertices. Two features, i.e., mean curvature and average convexity, are required for the parcellation, denoted as “curv” and “sulc” field attributes in the vtk file, respectively. For resampling and feature computing, FreeSurfer [[2]](https://www.sciencedirect.com/science/article/pii/S1053811912000389) can be used. To be consistent with the trained model, gyral crests should have negative curvature values, while sulcal bottoms should have positive curvature values.
@@ -98,18 +82,32 @@ Troubleshoot notes:
 ### Examples
 You can test the code using the example surfaces we provided in the `examples` folder. Simply run:
 ```
-python predict.py -hemi left -l 7 -i surfaces/left_hemisphere/40962/test1.lh.40k.vtk
+python predict.py -hemi left -l 7 -i examples/left_hemisphere/40962/test1.lh.40k.vtk
 ```
 You will get the corresponding output surface at the same folder with name `test1.lh.40k.parc.vtk`.
 Or, run the command for all the 3 surface in the same folder:
 ```
-python predict.py -hemi left -l 7 -in_folder surfaces/left_hemisphere/40962
+python predict.py -hemi left -l 7 -in_folder examples/left_hemisphere/40962
 ```
 
 ### Visualization
 You can use [Paraview](https://www.paraview.org/) software to visualize the parcellated surface in VTK format. An example of the input curvature map and output parcellation map are shown below. More usages about Paraview please refer to [Paraview](https://www.paraview.org/).
 ![paraview](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/paraview.png).
 
+
+## Data structure
+The brain cortical surface lie in a non-Euclidean space represented by triangular meshes.
+![CorticalSurface](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_OrigSurf_SphereSurf.png) ![IcosahedronDiscretizedSphere](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_12-10242_spherical_surfaces.png) 
+
+## 1-ring filter on sphere
+The convolution on the spherical surface is performed baed on the 1-ring filter
+![convoulution](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_convolution.png).
+
+We provide 3 types of filter on the spherical surfaces.
+![filters](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_filters.png).
+
+## Spherical U-Net architecture
+![sphericaluent](https://raw.githubusercontent.com/zhaofenqiang/Spherical_U-Net/master/images/figure_unet.png).
 
 ## Cite
 If you use this code for your research, please cite as:
