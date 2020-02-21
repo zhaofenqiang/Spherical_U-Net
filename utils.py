@@ -187,7 +187,7 @@ def get_upsample_order(mat_path, order_path):
 
 def get_par_fs_to_36():
     """ Preprocessing for parcellatiion label """
-    file = '/media/fenqiang/DATA/unc/Data/NITRC/data/left/train/MNBCP107842_809.lh.SphereSurf.Orig.Resample.vtk'
+    file = 'neigh_indices/template.vtk'
     data = read_vtk(file)
     par_fs = data['par_fs']
     par_fs_label = np.sort(np.unique(par_fs))
@@ -199,7 +199,7 @@ def get_par_fs_to_36():
 
 def get_par_36_to_fs_vec():
     """ Preprocessing for parcellatiion label """
-    file = '/media/fenqiang/DATA/unc/Data/NITRC/data/left/train/MNBCP107842_809.lh.SphereSurf.Orig.Resample.vtk'
+    file = 'neigh_indices/template.vtk'
     data = read_vtk(file)
     par_fs = data['par_fs']
     par_fs_vec = data['par_fs_vec']
