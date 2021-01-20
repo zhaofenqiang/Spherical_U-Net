@@ -17,12 +17,9 @@ This is the code for paper ["Spherical U-Net on Cortical Surfaces: Methods and A
 You can use conda to easily create an environment for the experiment using following command:
 ```
 conda create -n sunet python=3.6 
+conda activate sunet
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 conda install -c conda-forge pyvista
-```
-Activate the newly created conda environment via:
-```
-conda activate sunet
 ```
 
 ### Data preparation
