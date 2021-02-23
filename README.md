@@ -110,5 +110,5 @@ We provide 3 types of filter on the spherical surfaces.
 If you use this code for your research, please cite as:
 
 Fenqiang Zhao, et.al. Spherical U-Net on Cortical Surfaces: Methods and Applications. Information Processing in Medical Imaging (IPMI), 2019.
-
+Fenqiang Zhao, et.al. Spherical Deformable U-Net: Application to Cortical Surface Parcellation and Development Prediction. IEEE Transactions on Medical Imaging, 2021.
 
