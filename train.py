@@ -3,7 +3,9 @@
 """
 Created on Tue Aug 28 14:21:19 2018
 
-@author: zfq
+@author: Fenqiang Zhao, https://github.com/zhaofenqiang
+
+Contact: zhaofenqiang0221@gmail.com
 """
 
 import torch
@@ -14,11 +16,10 @@ import numpy as np
 import glob
 import os
 
-from utils import compute_weight
-from comparison_model import *
+from sphericalunet.utils.utils import compute_weight
 import matplotlib.pyplot as plt
-from tensorboardX import SummaryWriter
-writer = SummaryWriter('log/a')
+# from tensorboardX import SummaryWriter
+# writer = SummaryWriter('log/a')
 
 ################################################################
 """ hyper-parameters """

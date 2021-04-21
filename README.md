@@ -1,11 +1,11 @@
 # Spherical U-Net on Cortical Surfaces
-This is the code for paper ["Spherical U-Net on Cortical Surfaces: Methods and Applications"](https://link.springer.com/chapter/10.1007/978-3-030-20351-1_67). The code in the main directory is for the parcellation task. The code in the [prediction](https://github.com/zhaofenqiang/Spherical_U-Net/tree/master/prediction) directory is for the prediction task.
+This is the code for paper ["Spherical U-Net on Cortical Surfaces: Methods and Applications"](https://link.springer.com/chapter/10.1007/978-3-030-20351-1_67). 
 
 ## How to use it
 ### Prerequisites
 - Linux
-- NVIDIA GPU
-- CUDA CuDNN
+- ~~NVIDIA GPU~~
+- ~~CUDA CuDNN~~
 
 ### Python Dependencies
 - python (3.6)
@@ -20,6 +20,11 @@ conda create -n sunet python=3.6
 conda activate sunet
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 conda install -c conda-forge pyvista
+```
+
+You can install the Spherical U‐Net package from PyPI:
+```
+pip install sphericalunet
 ```
 
 ### Data preparation
