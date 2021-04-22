@@ -22,7 +22,7 @@ conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 conda install -c conda-forge pyvista
 ```
 
-You can install the Spherical U‐Net package from PyPI:
+Some basic tools can be found in the [Spherical U‐Net package](https://github.com/zhaofenqiang/SphericalUNetPackage) and installed from PyPI:
 ```
 pip install sphericalunet
 ```
